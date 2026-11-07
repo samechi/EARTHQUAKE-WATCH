@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#08111f">
+  <title>EARTHQUAKE WATCH | 地震情報</title>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#07101d; --panel:#101d2d; --panel2:#142338; --line:#263a52;
+      --text:#edf4ff; --muted:#9aacc2; --cyan:#67d8e8; --green:#65d6a2;
+      --amber:#ffbd69; --red:#ff6d75; --shadow:0 18px 50px rgba(0,0,0,.28);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; color:var(--text);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(ellipse at 80% -10%,rgba(41,112,151,.22),transparent 42%),
+        radial-gradient(ellipse at 0% 30%,rgba(43,77,119,.14),transparent 35%),var(--bg);
+    }
+    .wrap{width:min(980px,100%);margin:0 auto;padding:28px 18px 44px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}
+    .brand{display:flex;align-items:center;gap:13px}
+    .brand-icon{width:44px;height:44px;border:1px solid #31506a;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#17334a,#102033);font-size:22px}
+    h1{font-size:17px;letter-spacing:.13em;margin:0;font-weight:800}
+    .subtitle{font-size:11px;color:var(--muted);letter-spacing:.08em;margin-top:4px}
+    .status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;white-space:nowrap}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px currentColor}
+    .dot.ok{background:var(--green)} .dot.error{background:var(--red)}
+    .hero{background:linear-gradient(145deg,rgba(22,43,65,.98),rgba(13,27,43,.98));border:1px solid #2a4059;border-radius:24px;padding:25px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+    .hero:after{content:"";position:absolute;width:260px;height:260px;border:1px solid rgba(103,216,232,.09);border-radius:50%;right:-110px;top:-130px;box-shadow:0 0 0 24px rgba(103,216,232,.025),0 0 0 50px rgba(103,216,232,.02);pointer-events:none}
+    .eyebrow{font-size:11px;letter-spacing:.16em;color:var(--cyan);font-weight:800}
+    .quake-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-top:18px}
+    .intensity-wrap{display:flex;align-items:center;gap:17px}
+    .intensity{width:104px;height:104px;border-radius:24px;display:grid;place-content:center;text-align:center;background:linear-gradient(145deg,#f4a34c,#d96b39);color:#1b1720;box-shadow:0 10px 28px rgba(217,107,57,.22)}
+    .intensity small{font-size:11px;font-weight:800;letter-spacing:.08em}
+    .intensity strong{font-size:37px;line-height:1.12}
+    .place{font-size:clamp(23px,4vw,34px);font-weight:800;letter-spacing:.02em;line-height:1.3}
+    .occurred{color:#b5c5d8;font-size:13px;margin-top:8px}
+    .latest-tag{border:1px solid #376078;color:#9fe8ee;background:rgba(63,153,169,.1);padding:7px 10px;border-radius:999px;font-size:11px;white-space:nowrap}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:24px}
+    .stat{background:rgba(5,14,25,.35);border:1px solid rgba(119,153,183,.16);border-radius:15px;padding:14px}
+    .stat label{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}
+    .stat strong{font-size:21px;font-weight:750;letter-spacing:.02em}
+    .stat .unit{font-size:11px;color:var(--muted);margin-left:3px}
+    .section{margin-top:18px;background:rgba(16,29,45,.88);border:1px solid var(--line);border-radius:20px;padding:20px}
+    .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+    h2{font-size:14px;margin:0;letter-spacing:.05em}
+    .section-note{font-size:11px;color:var(--muted)}
+    .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0 22px}
+    .detail{padding:12px 0;border-bottom:1px solid rgba(117,145,172,.14);display:flex;justify-content:space-between;gap:12px;font-size:13px}
+    .detail span{color:var(--muted)} .detail strong{text-align:right;font-weight:650;overflow-wrap:anywhere}
+    .coords{color:var(--cyan);text-decoration:none}
+    .coords:hover{text-decoration:underline}
+    .points{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .point{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0c1928;border:1px solid #20364d;padding:10px 12px;border-radius:11px;font-size:12px}
+    .point-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .scale{font-weight:800;white-space:nowrap;padding:4px 8px;border-radius:7px;color:#111827;background:#a8b4c4}
+    .s10{background:#b9d9ed}.s20{background:#77c9f1}.s30{background:#4dd6b0}.s40{background:#f4e36c}.s45{background:#ffbd69}.s50{background:#ff985e}.s55{background:#ff6e67}.s60{background:#e85c8a;color:white}.s70{background:#b65be0;color:white}
+    .empty{padding:28px 12px;text-align:center;color:var(--muted);font-size:13px}
+    .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+    button{appearance:none;border:1px solid #31536c;background:#17334a;color:#eaf8ff;border-radius:12px;padding:11px 16px;font-weight:700;font-size:12px;cursor:pointer}
+    button:hover{background:#20445f} button:disabled{opacity:.55;cursor:wait}
+    .updated{color:var(--muted);font-size:11px;margin-left:auto}
+    .notice{margin-top:18px;color:#8296ad;font-size:11px;line-height:1.8}
+    .notice strong{color:#b7c7d8}
+    footer{text-align:center;color:#61758d;font-size:10px;margin-top:26px;letter-spacing:.04em}
+    @media(max-width:650px){
+      .wrap{padding:19px 13px 32px} header{margin-bottom:17px}
+      .hero{padding:19px;border-radius:19px}
+      .quake-head{display:block}.latest-tag{display:inline-block;margin-top:15px}
+      .intensity-wrap{gap:13px}.intensity{width:86px;height:86px;border-radius:19px}.intensity strong{font-size:31px}
+      .stats{grid-template-columns:repeat(2,1fr);gap:8px;margin-top:19px}
+      .stat{padding:12px}.stat strong{font-size:19px}
+      .section{padding:16px;border-radius:17px}
+      .detail-grid{grid-template-columns:1fr}
+      .points{grid-template-columns:1fr}
+      .updated{width:100%;margin:2px 0 0}
+      .status{font-size:10px}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">⌁</div>
+        <div>
+          <h1>EARTHQUAKE WATCH</h1>
+          <div class="subtitle">JAPAN SEISMIC INFORMATION</div>
+        </div>
+      </div>
+      <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">接続確認中</span></div>
+    </header>
+
+    <section class="hero" aria-live="polite">
+      <div class="eyebrow">LATEST EARTHQUAKE INFORMATION</div>
+      <div id="quakeContent">
+        <div class="empty">地震情報を取得しています…</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>震源・発表情報</h2>
+        <span class="section-note">SOURCE DETAILS</span>
+      </div>
+      <div id="details" class="detail-grid">
+        <div class="empty">情報を取得しています…</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>各地の震度</h2>
+        <span id="pointCount" class="section-note">観測地点</span>
+      </div>
+      <div id="points" class="points"><div class="empty">震度情報を取得しています…</div></div>
+    </section>
+
+    <div class="actions">
+      <button id="refreshButton" type="button">↻　今すぐ更新</button>
+      <button id="autoButton" type="button" aria-pressed="true">自動更新：ON</button>
+      <span id="updatedAt" class="updated">最終取得：--</span>
+    </div>
+
+    <p class="notice">
+      <strong>ご利用上の注意</strong><br>
+      このアプリはP2P地震情報が提供する情報を表示する補助ツールです。情報の遅延・欠落・通信障害が発生する場合があります。緊急地震速報や避難判断の代替として使用せず、気象庁・自治体などの公式情報を確認してください。<br>
+      情報提供：<a class="coords" href="https://www.p2pquake.net/" target="_blank" rel="noopener">P2P地震情報</a>
+    </p>
+    <footer>EARTHQUAKE WATCH · LOCAL HTML EDITION</footer>
+  </main>
+
+<script>
+(() => {
+  "use strict";
+  const API_URL = "https://api.p2pquake.net/v2/history?codes=551&limit=20";
+  const UPDATE_INTERVAL = 30_000;
+  let timer = null;
+  let autoUpdate = true;
+  let latestId = null;
+
+  const $ = (id) => document.getElementById(id);
+  const scaleLabels = {
+    10:"震度1",20:"震度2",30:"震度3",40:"震度4",
+    45:"震度5弱",50:"震度5強",55:"震度6弱",60:"震度6強",70:"震度7"
+  };
+  const scaleClasses = {
+    10:"s10",20:"s20",30:"s30",40:"s40",
+    45:"s45",50:"s50",55:"s55",60:"s60",70:"s70"
+  };
+  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+
+  function setStatus(type, text) {
+    $("statusDot").className = "dot" + (type ? " " + type : "");
+    $("statusText").textContent = text;
+  }
+  function formatDate(value) {
+    if (!value) return "情報なし";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return new Intl.DateTimeFormat("ja-JP", {
+      year:"numeric",month:"2-digit",day:"2-digit",
+      hour:"2-digit",minute:"2-digit",second:"2-digit",
+      hour12:false
+    }).format(d);
+  }
+  function formatScale(value) {
+    return scaleLabels[value] || (value === -1 || value == null ? "不明" : `震度情報 (${value})`);
+  }
+  function displayValue(value, suffix = "") {
+    return value === undefined || value === null || value === "" || value === -1
+      ? "情報なし" : `${value}${suffix}`;
+  }
+  function getLatestQuake(items) {
+    const quakes = (Array.isArray(items) ? items : []).filter(item =>
+      item && item.code === 551 && item.earthquake && !item.cancelled
+    );
+    quakes.sort((a,b) => new Date(b.issue?.time || b.time || 0) - new Date(a.issue?.time || a.time || 0));
+    return quakes[0] || null;
+  }
+  function renderQuake(item) {
+    const eq = item.earthquake || {};
+    const hypo = eq.hypocenter || {};
+    const maxScale = eq.maxScale;
+    const name = hypo.name || "震源地情報なし";
+    const occurred = eq.time || "発生時刻情報なし";
+    const mag = hypo.magnitude;
+    const depth = hypo.depth;
+    const lat = hypo.latitude;
+    const lon = hypo.longitude;
+    const coordsAvailable = Number.isFinite(lat) && Number.isFinite(lon) && lat > -90 && lon > -180;
+    const mapUrl = coordsAvailable
+      ? `https://www.google.com/maps?q=${encodeURIComponent(lat + "," + lon)}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}`;
+
+    $("quakeContent").innerHTML = `
+      <div class="quake-head">
+        <div class="intensity-wrap">
+          <div class="intensity"><small>最大震度</small><strong>${escapeHtml(formatScale(maxScale).replace("震度",""))}</strong></div>
+          <div><div class="place">${escapeHtml(name)}</div><div class="occurred">発生日時：${escapeHtml(occurred)}</div></div>
+        </div>
+        <span class="latest-tag">● 最新の地震情報</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><label>マグニチュード</label><strong>${escapeHtml(displayValue(mag))}</strong></div>
+        <div class="stat"><label>震源の深さ</label><strong>${escapeHtml(displayValue(depth, " km"))}</strong></div>
+        <div class="stat"><label>最大震度</label><strong>${escapeHtml(formatScale(maxScale))}</strong></div>
+        <div class="stat"><label>発表種別</label><strong style="font-size:14px">${escapeHtml(item.issue?.type || "地震情報")}</strong></div>
+      </div>`;
+
+    $("details").innerHTML = `
+      <div class="detail"><span>発生日時</span><strong>${escapeHtml(occurred)}</strong></div>
+      <div class="detail"><span>情報発表日時</span><strong>${escapeHtml(formatDate(item.issue?.time || item.time))}</strong></div>
+      <div class="detail"><span>震央地名</span><strong>${escapeHtml(name)}</strong></div>
+      <div class="detail"><span>マグニチュード</span><strong>${escapeHtml(displayValue(mag))}</strong></div>
+      <div class="detail"><span>震源の深さ</span><strong>${escapeHtml(displayValue(depth, " km"))}</strong></div>
+      <div class="detail"><span>緯度・経度</span><strong>${coordsAvailable ? `${escapeHtml(lat)}°, ${escapeHtml(lon)}°` : "情報なし"}</strong></div>
+      <div class="detail"><span>震源位置</span><strong><a class="coords" href="${mapUrl}" target="_blank" rel="noopener">地図で確認 ↗</a></strong></div>
+      <div class="detail"><span>発表元</span><strong>${escapeHtml(item.issue?.source || "P2P地震情報")}</strong></div>
+      <div class="detail"><span>情報の種類</span><strong>${escapeHtml(item.issue?.type || "地震情報")}</strong></div>
+      <div class="detail"><span>情報ID</span><strong>${escapeHtml(item.id || "取得情報なし")}</strong></div>`;
+
+    const points = Array.isArray(item.points) ? [...item.points] : [];
+    points.sort((a,b) => (b.scale || 0) - (a.scale || 0));
+    $("pointCount").textContent = `${points.length}地点`;
+    $("points").innerHTML = points.length
+      ? points.slice(0,30).map(p => `
+          <div class="point">
+            <span class="point-name">${escapeHtml([p.pref,p.addr].filter(Boolean).join(" "))}</span>
+            <span class="scale ${scaleClasses[p.scale] || ""}">${escapeHtml(formatScale(p.scale))}</span>
+          </div>`).join("")
+      : `<div class="empty">この情報には各地の震度データが含まれていません。</div>`;
+    latestId = item.id || item.issue?.time || item.time || null;
+  }
+
+  async function fetchLatest() {
+    const button = $("refreshButton");
+    button.disabled = true;
+    setStatus("", "情報取得中");
+    try {
+      const response = await fetch(API_URL, {
+        method:"GET",
+        headers:{ "Accept":"application/json" },
+        cache:"no-store"
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const item = getLatestQuake(data);
+      if (!item) {
+        $("quakeContent").innerHTML = `<div class="empty">現在、表示できる地震情報が見つかりません。<br>次回の更新をお待ちください。</div>`;
+        $("details").innerHTML = `<div class="empty">地震情報はありません。</div>`;
+        $("points").innerHTML = `<div class="empty">観測地点情報はありません。</div>`;
+        $("pointCount").textContent = "0地点";
+      } else {
+        renderQuake(item);
+      }
+      setStatus("ok", "API接続中");
+      $("updatedAt").textContent = `最終取得：${new Date().toLocaleTimeString("ja-JP")}`;
+    } catch (error) {
+      console.error(error);
+      setStatus("error", "取得エラー");
+      if (!$("quakeContent").querySelector(".place")) {
+        $("quakeContent").innerHTML = `
+          <div class="empty">
+            地震情報を取得できませんでした。<br><br>
+            <strong>原因の例</strong><br>
+            ・インターネットに接続されていない<br>
+            ・API側の一時的な障害<br>
+            ・ローカルファイルからの通信がブラウザに制限されている（CORS）
+          </div>`;
+      }
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function configureTimer() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    if (autoUpdate) timer = setInterval(fetchLatest, UPDATE_INTERVAL);
+    $("autoButton").textContent = `自動更新：${autoUpdate ? "ON" : "OFF"}`;
+    $("autoButton").setAttribute("aria-pressed", String(autoUpdate));
+  }
+  $("refreshButton").addEventListener("click", fetchLatest);
+  $("autoButton").addEventListener("click", () => {
+    autoUpdate = !autoUpdate;
+    configureTimer();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) fetchLatest();
+  });
+
+  fetchLatest();
+  configureTimer();
+})();
+</script>
+</body>
+</html>
